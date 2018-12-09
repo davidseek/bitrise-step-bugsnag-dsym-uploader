@@ -1,6 +1,14 @@
 # Bugsnag DSYM Uploader
 
-The connection is created automatically. Add the step after Xcode Archive step and before Deploy to iTunes step.
+If you upload your builds to iTunes Connect, Bugsnag will not be able to 
+show you any code hints on your crashes due to missing DSYM files.
+This step fixes that issue by upload the generated DSYM automatically 
+before deploying the build to iTunes Connect.
+
+The installation is simple:
+
+- add the step after the "Xcode Archive & Export for iOS" 
+  step and before the "Deploy to iTunes Connect..." step.
 
 
 ## How to use this Step
