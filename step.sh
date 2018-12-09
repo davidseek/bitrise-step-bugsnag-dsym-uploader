@@ -6,12 +6,12 @@ CONFIG_tmp_script_file_path="${THIS_SCRIPT_DIR}/._script_cont"
 
 if [ -z "${content}" ] ; then
 	echo " [!] => Failed: No script (content) defined for execution!"
-	exit 1
+	exit 2
 fi
 
 if [ -z "${runner_bin}" ] ; then
 	echo " [!] => Failed: No script executor defined!"
-	exit 1
+	exit 3
 fi
 
 function debug_echo {
@@ -30,7 +30,7 @@ if [ ! -z "${working_dir}" ] ; then
 	cd "${working_dir}"
 	if [ $? -ne 0 ] ; then
 		echo " [!] Failed to switch to working directory: ${working_dir}"
-		exit 1
+		exit 4
 	fi
 fi
 
@@ -48,7 +48,7 @@ if [[ "$(basename "${runner_bin}")" == "bash" ]] ; then
 	if [ $? -ne 0 ] ; then
 		echo " [!] Bash: Syntax Error!"
 		rm "${CONFIG_tmp_script_file_path}"
-		exit 1
+		exit 5
 	fi
 fi
 ${runner_bin} "${CONFIG_tmp_script_file_path}"
