@@ -1,30 +1,61 @@
-#!/usr/bin/env bash
-# fail if any commands fails
-set -e
-# debug log
-set -x
+#!/bin/bash
 
-ls **/*.dSYM/Contents/Resources/DWARF/* | while read line; do
-	echo "Uploading $line"
-	echo "Running: curl https://upload.bugsnag.com/ -F 'dsym=@$line'"
-	curl https://upload.bugsnag.com/ -F "dsym=@$line"
-done
+THIS_SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-#
-# --- Export Environment Variables for other Steps:
-# You can export Environment Variables for other Steps with
-#  envman, which is automatically installed by `bitrise setup`.
-# A very simple example:
-# envman add --key EXAMPLE_STEP_OUTPUT --value 'the value you want to share'
-# Envman can handle piped inputs, which is useful if the text you want to
-# share is complex and you don't want to deal with proper bash escaping:
-#  cat file_with_complex_input | envman add --KEY EXAMPLE_STEP_OUTPUT
-# You can find more usage examples on envman's GitHub page
-#  at: https://github.com/bitrise-io/envman
+CONFIG_tmp_script_file_path="${THIS_SCRIPT_DIR}/._script_cont"
 
-#
-# --- Exit codes:
-# The exit code of your Step is very important. If you return
-#  with a 0 exit code `bitrise` will register your Step as "successful".
-# Any non zero exit code will be registered as "failed" by `bitrise`.
+if [ -z "${content}" ] ; then
+	echo " [!] => Failed: No script (content) defined for execution!"
+	exit 1
+fi
 
+if [ -z "${runner_bin}" ] ; then
+	echo " [!] => Failed: No script executor defined!"
+	exit 1
+fi
+
+function debug_echo {
+	local msg="$1"
+	if [[ "${is_debug}" == "yes" ]] ; then
+		echo "${msg}"
+	fi
+}
+
+
+debug_echo
+debug_echo "==> Start"
+
+if [ ! -z "${working_dir}" ] ; then
+	debug_echo "==> Switching to working directory: ${working_dir}"
+	cd "${working_dir}"
+	if [ $? -ne 0 ] ; then
+		echo " [!] Failed to switch to working directory: ${working_dir}"
+		exit 1
+	fi
+fi
+
+if [ ! -z "${script_file_path}" ] ; then
+	debug_echo "==> Script (tmp) save path specified: ${script_file_path}"
+	CONFIG_tmp_script_file_path="${script_file_path}"
+fi
+
+echo -n "${content}" > "${CONFIG_tmp_script_file_path}"
+
+debug_echo
+if [[ "$(basename "${runner_bin}")" == "bash" ]] ; then
+	# bash syntax check
+	${runner_bin} -n "${CONFIG_tmp_script_file_path}"
+	if [ $? -ne 0 ] ; then
+		echo " [!] Bash: Syntax Error!"
+		rm "${CONFIG_tmp_script_file_path}"
+		exit 1
+	fi
+fi
+${runner_bin} "${CONFIG_tmp_script_file_path}"
+script_result=$?
+
+debug_echo
+debug_echo "==> Script finished with exit code: ${script_result}"
+
+rm "${CONFIG_tmp_script_file_path}"
+exit ${script_result}

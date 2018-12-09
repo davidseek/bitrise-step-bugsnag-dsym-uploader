@@ -18,8 +18,19 @@ workflows:
         inputs:
         - content: |
             #!/bin/bash
-            echo "Just an example 'secrets' print."
-            echo "The value of 'A_SECRET_PARAM' is: $A_SECRET_PARAM"
+            
+            #!/usr/bin/env bash
+            # fail if any commands fails
+            set -e
+            # debug log
+            set -x
+
+            ls **/*.dSYM/Contents/Resources/DWARF/* | while read line; do
+            echo "Uploading $line"
+            echo "Running: curl https://upload.bugsnag.com/ -F 'dsym=@$line'"
+            curl https://upload.bugsnag.com/ -F "dsym=@$line"
+            done
+            
     - change-workdir:
         title: Switch working dir to test / _tmp dir
         description: |-
